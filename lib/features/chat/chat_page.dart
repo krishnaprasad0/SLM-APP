@@ -8,6 +8,7 @@ import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_cubit.dart';
 import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_state.dart';
 import 'package:slm_poc/features/chat/model/chat_model.dart';
 import 'package:slm_poc/features/chat/widget/message_widget.dart';
+import 'package:slm_poc/helper/language_helper.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -63,7 +64,6 @@ class _ChatPageState extends State<ChatPage> {
           ).showSnackBar(SnackBar(content: Text(state.error!)));
         }
 
-        // 🎧 Auto fill speech result into the input field
         if (state.status.isNotEmpty &&
             state.isListening &&
             _controller.text != state.status) {
@@ -78,12 +78,36 @@ class _ChatPageState extends State<ChatPage> {
             title: Text('Chat - ${model.name}'),
             centerTitle: true,
             actions: [
+              BlocBuilder<LanguageCubit, String>(
+                builder: (context, lang) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/settingsPage');
+                        },
+                        child: Text(
+                          lang,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
               IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () => context.read<ChatCubit>().clear(),
               ),
             ],
           ),
+
           body: Stack(
             children: [
               Column(
@@ -199,8 +223,13 @@ class _ChatPageState extends State<ChatPage> {
             speechState is SpeechReady && chatCubit.state.isListening;
 
         return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(width: 0.5, color: Colors.white),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          color: Theme.of(context).scaffoldBackgroundColor,
+
           child: Row(
             children: [
               // 🎤 Mic Button
@@ -210,27 +239,33 @@ class _ChatPageState extends State<ChatPage> {
                           ? Colors.redAccent
                           : Theme.of(context).colorScheme.secondaryContainer,
                       shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () async {
-                          if (isListening) {
-                            await speechCubit.stopListening();
-                          } else {
-                            await speechCubit.initialize();
-                            await speechCubit.startListening();
-                          }
-                          // chatCubit.toggleListening();
+                      child: BlocBuilder<LanguageCubit, String>(
+                        builder: (context, state) {
+                          return InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () async {
+                              if (isListening) {
+                                await speechCubit.stopListening();
+                              } else {
+                                await speechCubit.initialize();
+                                await speechCubit.startListening(
+                                  languageCode: state,
+                                );
+                              }
+                              // chatCubit.toggleListening();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Icon(
+                                isListening ? Icons.mic : Icons.mic_none,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondaryContainer,
+                                size: 22,
+                              ),
+                            ),
+                          );
                         },
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Icon(
-                            isListening ? Icons.mic : Icons.mic_none,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSecondaryContainer,
-                            size: 22,
-                          ),
-                        ),
                       ),
                     )
                   : IconButton(
@@ -272,7 +307,6 @@ class _ChatPageState extends State<ChatPage> {
 
               const SizedBox(width: 8),
 
-              // 🚀 Send button
               Material(
                 color: Theme.of(context).primaryColor,
                 shape: const CircleBorder(),
@@ -281,11 +315,7 @@ class _ChatPageState extends State<ChatPage> {
                   onTap: () => _send(context),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Icon(
-                      Icons.send,
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      size: 20,
-                    ),
+                    child: Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
               ),

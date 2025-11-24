@@ -46,9 +46,10 @@ class SpeechCubit extends Cubit<SpeechState> {
   }
 
   /// Start listening to speech
-  Future<void> startListening() async {
+  Future<void> startListening({required String languageCode}) async {
     try {
       await _speech.listen(
+        localeId: languageCode,
         onResult: (result) {
           emit(SpeechRecognizing(result.recognizedWords));
         },

@@ -8,6 +8,8 @@ import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_cubit.dart';
 import 'package:slm_poc/features/home/cubit/model_check_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_cubit.dart';
 import 'package:slm_poc/features/home/download_page.dart';
+import 'package:slm_poc/features/settings/view/settings.dart';
+import 'package:slm_poc/helper/language_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +28,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<SpeechCubit>(create: (_) => SpeechCubit()..initialize()),
         BlocProvider<ModelCheckCubit>(create: (_) => ModelCheckCubit()),
         BlocProvider<DownloadCubit>(create: (_) => DownloadCubit()),
+        BlocProvider<LanguageCubit>(
+          create: (_) => LanguageCubit(defaultLanguage: 'en-IN'),
+        ),
       ],
       child: MaterialApp(
         title: 'Model Checker App',
@@ -36,6 +41,7 @@ class MyApp extends StatelessWidget {
           '/': (_) => const DownloadPage(),
           '/chat': (_) => ChatPage(),
           '/modelList': (_) => const DownloadPage(),
+          '/settingsPage': (_) => const Settings(),
         },
       ),
     );

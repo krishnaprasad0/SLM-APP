@@ -1,11 +1,11 @@
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:slm_poc/core/model_list.dart';
 import 'package:slm_poc/features/home/cubit/model_check_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_state.dart';
+import 'package:slm_poc/helper/language_helper.dart';
 
 class DownloadPage extends StatelessWidget {
   const DownloadPage({super.key});
@@ -18,7 +18,34 @@ class DownloadPage extends StatelessWidget {
         BlocProvider(create: (_) => ModelCheckCubit()..checkDownloadedModels()),
       ],
       child: Scaffold(
-        appBar: AppBar(title: const Text('Model Manager')),
+        appBar: AppBar(
+          title: const Text('Model Manager'),
+          actions: [
+            BlocBuilder<LanguageCubit, String>(
+              builder: (context, lang) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: Text(
+                      lang == "hi-IN" ? "Hindi" : "English",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/settingsPage');
+              },
+              icon: const Icon(Icons.settings),
+            ),
+          ],
+        ),
+
         body: const _DownloadView(),
       ),
     );
@@ -89,7 +116,6 @@ class _DownloadView extends StatelessWidget {
                     final model = models[index];
 
                     final isDownloaded = downloadedModels.contains(model.path);
-
                     return Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -105,8 +131,9 @@ class _DownloadView extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          'Path: ${model.path}\nFiles: ${model.files.length}'
-                          '${modelSizes[model.path] != null ? '\nSize: ${formatBytes(modelSizes[model.path]!)}' : ''}',
+                          modelSizes[model.path] != null
+                              ? '\nSize: ${formatBytes(modelSizes[model.path]!)}'
+                              : '',
                           style: const TextStyle(fontSize: 13),
                         ),
 

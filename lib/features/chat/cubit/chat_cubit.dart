@@ -4,6 +4,7 @@ import 'dart:isolate';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:slm_poc/core/gen_ai.dart';
 import 'package:slm_poc/core/model_list.dart';
@@ -16,17 +17,15 @@ class ChatCubit extends Cubit<ChatState> {
 
   final StringBuffer _tokenBuffer = StringBuffer();
   StreamSubscription<String>? _tokenSub;
-
-  // 🎙️ Speech & 🗣️ TTS
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
 
   final String _systemPrompt = """
-    You are a retail AI assistant for a store.
-    Answer briefly and clearly about products, inventory, and pricing.
-    Always show prices in Indian Rupees (₹) and use concise language.
-    Avoid unnecessary explanations or extra commentary.
-    """;
+        You are a retail AI assistant for a store.
+        Answer briefly and clearly about products, inventory, and pricing.
+        Always show prices in Indian Rupees (₹) and use concise language.
+        Avoid unnecessary explanations or extra commentary.
+        """;
 
   final double? _temperature = 0.7;
   double? _maxLength;
@@ -53,12 +52,9 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  /// ✉️ Send text message and stream model response with streaming TTS
   Future<void> sendMessage(String text) async {
-    log('The user query iss : $text');
-    if (state.isSending || text.trim().isEmpty) return;
-
     log('The user query is : $text');
+    if (state.isSending || text.trim().isEmpty) return;
     final userMsg = Message(
       text: text,
       isMine: true,
@@ -88,7 +84,6 @@ class ChatCubit extends Cubit<ChatState> {
         final partialText = _tokenBuffer.toString();
         emit(state.copyWith(partialText: partialText));
 
-        // Debounced streaming TTS every 1.5 seconds
         debounceTimer?.cancel();
         debounceTimer = Timer(const Duration(milliseconds: 1500), () async {
           final toSpeak = partialText.substring(lastSpoken.length).trim();
@@ -133,16 +128,24 @@ class ChatCubit extends Cubit<ChatState> {
     emit(state.copyWith(messages: msgs, isSending: false, partialText: ''));
   }
 
-  /// 🗣️ Speak text aloud (chunk-based)
   Future<void> speak(String text) async {
     if (text.isEmpty) return;
+
     try {
-      await _tts.setLanguage("en-IN");
+      final prefs = await SharedPreferences.getInstance();
+      final savedLang = prefs.getString('selected_language') ?? "en-IN";
+
+      await _tts.setLanguage(savedLang);
       await _tts.setPitch(1.0);
-      await _tts.stop();
+      await _tts.awaitSpeakCompletion(true);
+
+      try {
+        await _tts.stop();
+      } catch (_) {}
 
       emit(state.copyWith(isSpeaking: true));
       await _tts.speak(text);
+
       _tts.setCompletionHandler(() {
         emit(state.copyWith(isSpeaking: false));
       });
@@ -165,8 +168,6 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (e) {
       log('❌ Error stopping TTS: $e');
     }
-
-    // If you also want to stop recognition (STT), do it conditionally:
     try {
       await _speech.stop();
       log('🎙️ STT stopped successfully');

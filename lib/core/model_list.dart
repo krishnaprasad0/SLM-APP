@@ -69,11 +69,32 @@ class Models {
     ),
   );
 
+  // Sarvam
+  static final Model sarvam = Model(
+    "Sarvam",
+    "Sarvam_ONNX",
+    _buildUrls(
+      // Base path
+      'https://huggingface.co/onnx-community/sarvam-translate-onnx/resolve/main',
+      [
+        // Tokenizer/config files (root)
+        'added_tokens.json',
+        'genai_config.json',
+        'model.onnx',
+        'model.onnx.data',
+        'special_tokens_map.json',
+        'tokenizer_config.json',
+        'tokenizer.json',
+        'tokenizer.model',
+      ],
+    ),
+  );
+
   /// 📦 Collection of all models
   static final Map<String, Model> all = {
     'llama3_2': llama3_2,
-    'phi3_5Mini': phi3_5Mini,
     'DeepSeek_R1_Distill_ONNX': deepSeek_R1_Distill_ONNX,
+    'Sarvam_ONNX': sarvam,
   };
 
   /// Initialize default model (platform-aware)
@@ -96,7 +117,7 @@ class Models {
 
   static List<Model> get availableModels => [
     llama3_2,
-    // phi3_5Mini,
     deepSeek_R1_Distill_ONNX,
+    sarvam,
   ];
 }
