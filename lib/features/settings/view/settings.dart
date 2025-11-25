@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:slm_poc/helper/language_helper.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class Settings extends StatelessWidget {
   const Settings({super.key});
@@ -51,9 +52,35 @@ class Settings extends StatelessWidget {
       trailing: isSelected
           ? const Icon(Icons.check_circle, color: Colors.blue)
           : const Icon(Icons.radio_button_unchecked),
-      onTap: () {
-        context.read<LanguageCubit>().setLanguage(code);
+      onTap: () async {
+        final isAvailable = await LanguageHelper.isLanguageAvailable(code);
+
+        if (!isAvailable) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Language not available on this device")),
+          );
+          return;
+        } else {
+          context.read<LanguageCubit>().setLanguage(code);
+        }
       },
     );
+  }
+}
+
+class LanguageHelper {
+  static final FlutterTts _tts = FlutterTts();
+
+  static Future<bool> isLanguageAvailable(String code) async {
+    final langs = await _tts.getLanguages;
+    final inputPrefix = code.split("-").first.toLowerCase();
+    for (final l in langs) {
+      final langPrefix = l.split("-").first.toLowerCase();
+      if (langPrefix.startsWith(inputPrefix)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

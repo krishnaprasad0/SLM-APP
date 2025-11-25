@@ -31,7 +31,6 @@ class ChatCubit extends Cubit<ChatState> {
   double? _maxLength;
   final double? _lengthPenalty = 1.0;
 
-  /// Loads local model
   Future<void> loadModel(Model modelPath) async {
     emit(state.copyWith(isLoading: true, status: "Loading model..."));
     try {

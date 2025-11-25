@@ -18,6 +18,12 @@ class DownloadPage extends StatelessWidget {
         BlocProvider(create: (_) => ModelCheckCubit()..checkDownloadedModels()),
       ],
       child: Scaffold(
+        floatingActionButton: IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/checkOutPage');
+          },
+          icon: Icon(Icons.shop_outlined),
+        ),
         appBar: AppBar(
           title: const Text('Model Manager'),
           actions: [
@@ -38,7 +44,7 @@ class DownloadPage extends StatelessWidget {
               },
             ),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pushNamed(context, '/settingsPage');
               },
               icon: const Icon(Icons.settings),

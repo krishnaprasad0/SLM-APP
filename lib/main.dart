@@ -5,16 +5,22 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:slm_poc/features/chat/chat_page.dart';
 import 'package:slm_poc/features/chat/cubit/chat_cubit.dart';
 import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_cubit.dart';
+import 'package:slm_poc/features/checkout/model/checkout_model.dart';
+import 'package:slm_poc/features/checkout/view/bill_page.dart';
+import 'package:slm_poc/features/checkout/view/checkout.dart';
 import 'package:slm_poc/features/home/cubit/model_check_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_cubit.dart';
 import 'package:slm_poc/features/home/download_page.dart';
 import 'package:slm_poc/features/settings/view/settings.dart';
+import 'package:slm_poc/helper/db/data_base_helper.dart';
 import 'package:slm_poc/helper/language_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await _requestStoragePermissions();
+
+  DatabaseHelper.instance;
   runApp(const MyApp());
 }
 
@@ -42,6 +48,13 @@ class MyApp extends StatelessWidget {
           '/chat': (_) => ChatPage(),
           '/modelList': (_) => const DownloadPage(),
           '/settingsPage': (_) => const Settings(),
+          '/checkOutPage': (_) => const CheckoutPage(),
+          '/billPage': (context) {
+            final args =
+                ModalRoute.of(context)!.settings.arguments
+                    as List<CheckoutItem>;
+            return BillPage(items: args);
+          },
         },
       ),
     );

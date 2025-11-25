@@ -1,0 +1,224 @@
+import 'dart:async';
+import 'dart:developer';
+import 'dart:isolate';
+import 'package:bloc/bloc.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:slm_poc/helper/db/data_base_helper.dart';
+import 'package:slm_poc/helper/db/models/product_model.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:slm_poc/core/gen_ai.dart';
+import 'package:slm_poc/core/model_list.dart';
+import 'package:slm_poc/helper/file_helper.dart';
+import '../model/chat_model.dart';
+import 'chat_state.dart';
+
+class ChatCubit extends Cubit<ChatState> {
+  ChatCubit() : super(const ChatState.initial());
+
+  final StringBuffer _tokenBuffer = StringBuffer();
+  StreamSubscription<String>? _tokenSub;
+
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final FlutterTts _tts = FlutterTts();
+
+  final String _systemPrompt = """
+    You are a retail AI assistant for a store.
+    Answer briefly and clearly about products, inventory, and pricing.
+    Always show prices in Indian Rupees (₹).
+    Avoid unnecessary explanations or extra commentary.
+    """;
+
+  final double? _temperature = 0.7;
+  double? _maxLength;
+  final double? _lengthPenalty = 1.0;
+
+  Future<void> loadModel(Model modelPath) async {
+    emit(state.copyWith(isLoading: true, status: "Loading model..."));
+
+    try {
+      final rootIsolateToken = ServicesBinding.rootIsolateToken!;
+      final path = await getModelPath();
+      final fullPath = "$path/${modelPath.path}";
+
+      await Isolate.run(() async {
+        BackgroundIsolateBinaryMessenger.ensureInitialized(rootIsolateToken);
+        await GenAI.load(fullPath);
+      });
+
+      emit(state.copyWith(isLoading: false, status: "Model loaded"));
+    } catch (e, st) {
+      emit(state.copyWith(isLoading: false, error: e.toString()));
+      log("SLM load error: $e\n$st");
+    }
+  }
+
+  String extractProductName(String query) {
+    final ignoreWords = [
+      "what",
+      "price",
+      "the",
+      "of",
+      "is",
+      "stock",
+      "left",
+      "do",
+      "we",
+      "have",
+      "many",
+      "how",
+    ];
+
+    final words = query.split(" ");
+    return words
+        .where((w) => !ignoreWords.contains(w.toLowerCase()))
+        .join(" ")
+        .trim();
+  }
+
+  Future<String> handleDatabaseQuery(String userQuery) async {
+    final db = DatabaseHelper.instance;
+    final allProducts = await db.getAllProducts();
+
+    final extractedName = extractProductName(userQuery).toLowerCase();
+    final product = allProducts.firstWhere(
+      (p) => p.productName.toLowerCase().contains(extractedName),
+      orElse: () => Product.empty(),
+    );
+
+    if (product.productId == -1) return "";
+
+    if (userQuery.contains("price")) {
+      return "The price of ${product.productName} is ₹${product.productPrice}.";
+    }
+    if (userQuery.contains("stock") ||
+        userQuery.contains("left") ||
+        userQuery.contains("quantity")) {
+      return "${product.totalStock} units of ${product.productName} are left in stock.";
+    }
+
+    return "";
+  }
+
+  Future<void> sendMessage(String text) async {
+    log("User: $text");
+
+    if (state.isSending || text.trim().isEmpty) return;
+
+    final userMsg = Message(
+      text: text,
+      isMine: true,
+      id: '',
+      timestamp: DateTime.now(),
+    );
+
+    emit(
+      state.copyWith(messages: [...state.messages, userMsg], isSending: true),
+    );
+
+    final dbAnswer = await handleDatabaseQuery(text);
+
+    if (dbAnswer.isNotEmpty) {
+      await speak(dbAnswer);
+      final botMsg = Message(
+        text: dbAnswer,
+        isMine: false,
+        id: '',
+        timestamp: DateTime.now(),
+      );
+
+      emit(
+        state.copyWith(messages: [...state.messages, botMsg], isSending: false),
+      );
+
+      return;
+    }
+
+    await _sendToSLM(text);
+  }
+
+  Future<void> _sendToSLM(String text) async {
+    final finalPrompt =
+        "<system>$_systemPrompt<|end|><|user|>$text<|end|><|assistant|>";
+
+    final params = <String, double>{};
+    if (_temperature != null) params["temperature"] = _temperature;
+    if (_maxLength != null) params["max_length"] = _maxLength!;
+    if (_lengthPenalty != null) params["length_penalty"] = _lengthPenalty;
+
+    _tokenBuffer.clear();
+    _tokenSub?.cancel();
+
+    _tokenSub = GenAI.tokenStream.listen(
+      (token) => _tokenBuffer.write(token),
+      onDone: () async {
+        final finalOutput = _tokenBuffer.toString().trim();
+
+        await speak(finalOutput);
+
+        final botMsg = Message(
+          text: finalOutput,
+          isMine: false,
+          id: '',
+          timestamp: DateTime.now(),
+        );
+
+        emit(
+          state.copyWith(
+            messages: [...state.messages, botMsg],
+            isSending: false,
+          ),
+        );
+      },
+      onError: (e) {
+        emit(state.copyWith(isSending: false, error: e.toString()));
+      },
+    );
+
+    await GenAI.inference(finalPrompt, params: params);
+  }
+
+  Future<void> speak(String text) async {
+    if (text.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString("selected_language") ?? "en-IN";
+
+    await _tts.setLanguage(lang);
+    await _tts.setPitch(1.0);
+    await _tts.awaitSpeakCompletion(true);
+
+    try {
+      await _tts.stop();
+    } catch (_) {}
+
+    emit(state.copyWith(isSpeaking: true));
+    await _tts.speak(text);
+
+    _tts.setCompletionHandler(() {
+      emit(state.copyWith(isSpeaking: false));
+    });
+  }
+
+  Future<void> clear() async {
+    emit(state.copyWith(messages: []));
+  }
+
+  void stopSpeech() async {
+    try {
+      await _tts.stop();
+      await _speech.stop();
+    } catch (_) {}
+    emit(state.copyWith(isSpeaking: false));
+  }
+
+  @override
+  Future<void> close() {
+    _tokenSub?.cancel();
+    _speech.stop();
+    _tts.stop();
+    GenAI.unload();
+    return super.close();
+  }
+}
