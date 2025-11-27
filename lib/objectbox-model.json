@@ -1,0 +1,104 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:2108371891273071031",
+      "lastPropertyId": "15:2071740965247427883",
+      "name": "Product",
+      "properties": [
+        {
+          "id": "1:1983681352834159827",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3671115263310211885",
+          "name": "productId",
+          "type": 6
+        },
+        {
+          "id": "3:5892352733235045185",
+          "name": "productName",
+          "type": 9
+        },
+        {
+          "id": "4:8275754757775377205",
+          "name": "productDescription",
+          "type": 9
+        },
+        {
+          "id": "5:1173402057620380758",
+          "name": "productPrice",
+          "type": 8
+        },
+        {
+          "id": "6:9098219910186720979",
+          "name": "totalStock",
+          "type": 6
+        },
+        {
+          "id": "7:2864191299268268726",
+          "name": "productUnit",
+          "type": 9
+        },
+        {
+          "id": "8:4033412656597174363",
+          "name": "expireDate",
+          "type": 9
+        },
+        {
+          "id": "9:4121473692285358792",
+          "name": "category",
+          "type": 9
+        },
+        {
+          "id": "10:6221142370817929887",
+          "name": "brand",
+          "type": 9
+        },
+        {
+          "id": "11:784422021318027093",
+          "name": "sku",
+          "type": 9
+        },
+        {
+          "id": "12:874028136027464615",
+          "name": "barcode",
+          "type": 9
+        },
+        {
+          "id": "13:775901736138010858",
+          "name": "createdAt",
+          "type": 9
+        },
+        {
+          "id": "14:4500767677670841985",
+          "name": "updatedAt",
+          "type": 9
+        },
+        {
+          "id": "15:2071740965247427883",
+          "name": "embedding",
+          "indexId": "1:4945427057340568746",
+          "type": 28,
+          "flags": 8
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "1:2108371891273071031",
+  "lastIndexId": "1:4945427057340568746",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

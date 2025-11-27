@@ -18,6 +18,12 @@ class DownloadPage extends StatelessWidget {
         BlocProvider(create: (_) => ModelCheckCubit()..checkDownloadedModels()),
       ],
       child: Scaffold(
+        floatingActionButton: IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/search');
+          },
+          icon: Icon(Icons.add),
+        ),
         appBar: AppBar(
           title: const Text('Model Manager'),
           actions: [

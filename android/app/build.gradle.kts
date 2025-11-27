@@ -41,7 +41,7 @@ android {
 
 dependencies {
     implementation("com.microsoft.onnxruntime:onnxruntime-android:latest.release")
-    implementation(files("libs/onnxruntime-genai-android-0.6.0.aar"))
+    implementation(files("libs/onnxruntime-genai-android-0.11.2.aar"))
 }
 
 flutter {

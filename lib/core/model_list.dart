@@ -69,6 +69,29 @@ class Models {
     ),
   );
 
+  // Qwen 3 Embedding model
+
+  static final Model qwen_3_embedding = Model(
+    "Qwen 3 Embedding",
+    "Qwen_3_Embedding",
+    _buildUrls(
+      // Base path
+      'https://huggingface.co/zhiqing/Qwen3-Embedding-0.6B-ONNX/resolve/main',
+      [
+        // Tokenizer/config files (root)
+        'added_tokens.json',
+        'chat_template.jinja',
+        'config.json',
+        'merges.txt',
+        'model.onnx',
+        'special_tokens_map.json',
+        'tokenizer.json',
+        'tokenizer_config.json',
+        'vocab.json',
+      ],
+    ),
+  );
+
   // Sarvam
   static final Model sarvam = Model(
     "Sarvam",
@@ -90,11 +113,25 @@ class Models {
     ),
   );
 
+  static final Model gteBase = Model(
+    "GTE Base",
+    "gte-base-onnx",
+    _buildUrls("https://huggingface.co/Xenova/gte-base/resolve/main/onnx", [
+      "model.onnx",
+      "tokenizer.json",
+      "vocab.json",
+      "special_tokens_map.json",
+      "tokenizer_config.json",
+      "config.json",
+    ]),
+  );
+
   /// 📦 Collection of all models
   static final Map<String, Model> all = {
     'llama3_2': llama3_2,
     'DeepSeek_R1_Distill_ONNX': deepSeek_R1_Distill_ONNX,
-    'Sarvam_ONNX': sarvam,
+    'Qwen_3_Embedding': qwen_3_embedding,
+    'gte-base-onnx': gteBase,
   };
 
   /// Initialize default model (platform-aware)
@@ -118,6 +155,7 @@ class Models {
   static List<Model> get availableModels => [
     llama3_2,
     deepSeek_R1_Distill_ONNX,
-    sarvam,
+    qwen_3_embedding,
+    gteBase,
   ];
 }
