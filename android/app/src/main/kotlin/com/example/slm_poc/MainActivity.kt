@@ -51,13 +51,18 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun handleLoadModel(path: String, result: MethodChannel.Result) {
-        val isLoaded = genAIWrapper.load(path)
-        if (isLoaded) {
-            result.success("LOADED")
-        } else {
-            result.error("LOAD_FAILED", "Failed to load model", null)
+        CoroutineScope(Dispatchers.IO).launch {
+            val success = genAIWrapper.loadModelAsync(path)
+            withContext(Dispatchers.Main) {
+                if (success) {
+                    result.success("LOADED")
+                } else {
+                    result.error("LOAD_FAILED", "Failed to load model", null)
+                }
+            }
         }
     }
+
 
     private fun handleInference(
         call: MethodCall, result: MethodChannel.Result

@@ -1,11 +1,20 @@
+import 'dart:developer';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:slm_poc/core/app_service.dart';
 import 'package:slm_poc/core/model_list.dart';
 import 'package:slm_poc/features/home/cubit/model_check_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_cubit.dart';
 import 'package:slm_poc/features/home/download_cubit/download_state.dart';
 import 'package:slm_poc/helper/language_helper.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'dart:developer';
+
+import 'package:flutter_tts/flutter_tts.dart';
+import 'dart:developer';
+
+final FlutterTts _flutterTts = FlutterTts();
 
 class DownloadPage extends StatelessWidget {
   const DownloadPage({super.key});
@@ -19,8 +28,22 @@ class DownloadPage extends StatelessWidget {
       ],
       child: Scaffold(
         floatingActionButton: IconButton(
-          onPressed: () {
-            Navigator.pushNamed(context, '/search');
+          onPressed: () async {
+            // try {
+            //   await AppServices.instance.init();
+            // } catch (e) {
+            //   log("Error initializing app services: $e");
+            // }
+            bool hasTts = await checkTtsAvailability();
+
+            if (!hasTts) {
+              log("TTS not available — Please install Google Text-to-Speech");
+              return;
+            }
+
+            bool status = await checkSpeechToTextAvailability();
+
+            log('Speech to text availability: $status');
           },
           icon: Icon(Icons.add),
         ),
@@ -199,4 +222,47 @@ String formatBytes(int? bytes) {
   final size = (bytes / math.pow(1024, i));
   // show two decimal places
   return '${size.toStringAsFixed(2)} ${suffixes[i]}';
+}
+
+Future<bool> checkSpeechToTextAvailability() async {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool available = await _speech.initialize(
+    onError: (e) => log("STT Error: $e"),
+    onStatus: (s) => log("STT Status: $s"),
+  );
+
+  if (!available) {
+    log("Speech-to-Text not available on this device");
+  } else {
+    log("Speech-to-Text is available!");
+  }
+
+  return available;
+}
+
+Future<bool> checkTtsAvailability() async {
+  try {
+    // Check available engines
+    final engines = await _flutterTts.getEngines;
+    if (engines == null || engines.isEmpty) {
+      log("No TTS engines detected");
+      return false;
+    }
+
+    log("Available TTS engines: $engines");
+
+    // Check voices
+    final voices = await _flutterTts.getVoices;
+    if (voices == null || voices.isEmpty) {
+      log("Engine exists but voice data missing");
+      return false;
+    }
+
+    log("Available Voices: $voices");
+
+    return true;
+  } catch (e) {
+    log("Error checking TTS: $e");
+    return false;
+  }
 }

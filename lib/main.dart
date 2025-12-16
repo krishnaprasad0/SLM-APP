@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:slm_poc/core/app_service.dart';
 import 'package:slm_poc/features/chat/chat_page.dart';
 import 'package:slm_poc/features/chat/cubit/chat_cubit.dart';
 import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_cubit.dart';
@@ -13,8 +14,9 @@ import 'package:slm_poc/helper/language_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await _requestStoragePermissions();
+  // await AppServices.instance.init();
+
   runApp(const MyApp());
 }
 

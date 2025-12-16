@@ -40,8 +40,10 @@ android {
 }
 
 dependencies {
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:latest.release")
     implementation(files("libs/onnxruntime-genai-android-0.11.2.aar"))
+    implementation(files("libs/onnxruntime-android-1.23.2.aar"))
+    implementation(files("libs/sentence_embeddings.aar"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
 
 flutter {

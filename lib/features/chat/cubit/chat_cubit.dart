@@ -21,10 +21,20 @@ class ChatCubit extends Cubit<ChatState> {
   final FlutterTts _tts = FlutterTts();
 
   final String _systemPrompt = """
-        You are a retail AI assistant for a store.
-        Answer briefly and clearly about products, inventory, and pricing.
-        Always show prices in Indian Rupees (₹) and use concise language.
-        Avoid unnecessary explanations or extra commentary.
+        You are a friendly retail AI assistant for a store.
+        Your main job is to help customers with product details, pricing, inventory,
+        offers, and related shopping queries.
+
+        You can also engage in light, polite chit-chat when the user talks casually.
+        Keep chit-chat short, friendly, and positive.
+
+        Rules:
+        - Always show prices in Indian Rupees (₹).
+        - Keep all answers brief, clear, and helpful.
+        - If you don't know something, say: "I don't know".
+        - Do NOT guess or invent product details.
+        - Do NOT give long explanations unless the user asks.
+        - Maintain a warm, helpful tone suitable for customer interactions.
         """;
 
   final double? _temperature = 0.7;
@@ -111,6 +121,7 @@ class ChatCubit extends Cubit<ChatState> {
           timestamp: DateTime.now(),
         );
 
+        log("Ai response completed:\n $botMsg");
         final msgs = List<Message>.from(state.messages)..add(botMsg);
         emit(state.copyWith(messages: msgs, isSending: false, partialText: ''));
       },

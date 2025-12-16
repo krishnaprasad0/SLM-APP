@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:slm_poc/core/app_service.dart';
 import 'package:slm_poc/core/gen_ai.dart';
 import 'package:slm_poc/core/model_list.dart';
 import 'package:slm_poc/features/chat/cubit/chat_cubit.dart';
@@ -9,6 +12,8 @@ import 'package:slm_poc/features/chat/cubit/stt_cubit/stt_state.dart';
 import 'package:slm_poc/features/chat/model/chat_model.dart';
 import 'package:slm_poc/features/chat/widget/message_widget.dart';
 import 'package:slm_poc/helper/language_helper.dart';
+
+final rag = AppServices.instance.rag;
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -48,10 +53,17 @@ class _ChatPageState extends State<ChatPage> {
 
   void _send(BuildContext context) {
     final text = _controller.text.trim();
+
     if (text.isEmpty) return;
+    // searchProduct(query: text);
     context.read<ChatCubit>().sendMessage(text);
 
     _controller.clear();
+  }
+
+  void searchProduct({required String query}) async {
+    final results = await rag.search(query);
+    inspect(results);
   }
 
   @override
@@ -247,10 +259,14 @@ class _ChatPageState extends State<ChatPage> {
                               if (isListening) {
                                 await speechCubit.stopListening();
                               } else {
-                                await speechCubit.initialize();
-                                await speechCubit.startListening(
-                                  languageCode: state,
-                                );
+                                try {
+                                  await speechCubit.initialize();
+                                  await speechCubit.startListening(
+                                    languageCode: state,
+                                  );
+                                } catch (e) {
+                                  log('Error starting listening: $e');
+                                }
                               }
                               // chatCubit.toggleListening();
                             },
